@@ -1,0 +1,14 @@
+Pasos para el registro : 
+1. Registro del usuario: 
+se consulta si el usuario esta en el sistema por medio de la base de datos 
+
+2.Consulta y selección del libro
+consultar disponibilidad del libro 
+
+3.Proceso de préstamo
+asignarle el libro al ussuario 
+4. Devolución
+5. Renovación
+
+
+

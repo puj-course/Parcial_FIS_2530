@@ -19,5 +19,10 @@ public class Libro {
 
 	    }
 
+		public void actualizarCopiasDisponibles(int cantidad) {
+	               this.numeroCopiasDisponibles += cantidad;
+
+	    }
+
 
 }

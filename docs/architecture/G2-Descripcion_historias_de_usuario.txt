@@ -1,0 +1,9 @@
+Como Administrador - Quiero analizar los datos del sistema - Para monitorear el rendimiento de la biblioteca.
+
+Como Bibliotecario - Quiero registrar un nuevo libro - Para agregarlo al inventario de la biblioteca y que los usuarios puedan pedirlo prestado.
+
+Como Usuario - Quiero solicitar un préstamo de libro - Para poder obtener un libro y usarlo por un tiempo determinado.
+
+Como Bibliotecario - Quiero registrar la devolución de un libro - Para que el libro se marque como disponible y otro usuario pueda pedirlo prestado.
+
+Como Administrador - Quiero ver la cantidad de libros devueltos el último mes - Para conocer las estadísticas de uso de la biblioteca.

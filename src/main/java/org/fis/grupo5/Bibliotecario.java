@@ -31,3 +31,6 @@ class Bibliotecario {
         }
     }
 }
+
+
+ // la clase bibliotecario se babs en logica como desarollo de this 

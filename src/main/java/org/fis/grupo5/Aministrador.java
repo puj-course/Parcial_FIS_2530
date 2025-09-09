@@ -5,7 +5,7 @@ public class Administrador {
 
     public void analizarDatos() { }
 
-    public int cantidadLibrosDisponibles() {
+    public int cantidadLibrosDisponibles() { //recorrer los libros y hacer un conteo para luego guardar este dato y devolverlo
         return 0;
     }
 
@@ -19,3 +19,4 @@ public class Administrador {
 
     public void listarUsuariosConRetrasos() { }
 }
+

@@ -1,5 +1,5 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
+# Usar Eclipse Temurin como imagen base (Java 17)
+FROM eclipse-temurin:17-jdk
 
 # Set the working directory in the container
 WORKDIR /app
@@ -7,13 +7,13 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install Maven
+# Instalar Maven
 RUN apt-get update && \
     apt-get install -y maven && \
     rm -rf /var/lib/apt/lists/*
 
-# Build the project
+# Build del proyecto
 RUN mvn clean install
 
-# Run the application
+# Ejecutar la aplicación
 CMD ["java", "-jar", "target/your-app.jar"]

@@ -1,0 +1,13 @@
+public class Usuario{
+    public String nombre;
+    public String apellido;
+    public int CC;
+    public String correo;
+    public int telefono;
+    public String tipo;
+    
+    public ArrayList<Prestamo> prestamos;
+    
+    
+    public void solicitarPrestamo(Libro libro);
+}

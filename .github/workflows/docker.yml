@@ -1,0 +1,64 @@
+name: Generar dockerfile - Grupo 1
+
+on:
+  push:
+    branches:
+      - Grupo-1   #  Activación: se ejecuta cuando hay un push en esta rama
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------
+      #  Activación: descarga del código
+      # ---------------------------
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # Configuración de versiones
+      # ---------------------------
+      - name: Configurar versión de Java y Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      # ---------------------------
+      #  Build del proyecto
+      # ---------------------------
+      - name: Compilar proyecto con Maven
+        run: mvn -B clean package --file pom.xml
+
+      # ---------------------------
+      #  Test exitoso de las pruebas unitarias
+      # ---------------------------
+      - name: Ejecutar pruebas unitarias
+        run: mvn test --file pom.xml
+
+      # ---------------------------
+      #  Generación del Dockerfile del proyecto
+      # ---------------------------
+      - name: Generar Dockerfile dinámicamente
+        run: |
+          cat << 'EOF' > Dockerfile
+          # Imagen base con JDK 17
+          FROM openjdk:17-jdk-slim
+
+          # Crear directorio de trabajo
+          WORKDIR /app
+
+          # Copiar el JAR generado por Maven
+          COPY target/*.jar app.jar
+
+          # Puerto expuesto (ajústalo según tu app)
+          EXPOSE 8080
+
+          # Comando de ejecución
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
+
+      - name: Mostrar contenido del Dockerfile
+        run: cat Dockerfile

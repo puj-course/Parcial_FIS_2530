@@ -1,0 +1,52 @@
+name: CI (Build + Test + Docker)
+
+on:
+  push:
+    branches: [ "Grupo3" ]   # <-- ajusta aquí el nombre de la rama del equipo
+  pull_request:
+    branches: [ "equipo-g3" ]
+
+jobs:
+  build-test-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build & Test (Maven)
+        run: mvn -B -DskipTests=false clean verify
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            **/target/surefire-reports/**
+            **/target/site/jacoco/**
+
+      - name: Build Docker image
+        if: hashFiles('Dockerfile') != ''
+        run: |
+          IMAGE_NAME=${{ github.repository }}:build-${{ github.run_number }}
+          docker build -t "$IMAGE_NAME" .
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Save Docker image as artifact
+        if: hashFiles('Dockerfile') != ''
+        run: docker save "$IMAGE_NAME" -o image.tar
+
+      - name: Upload Docker image artifact
+        if: hashFiles('Dockerfile') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: image.tar

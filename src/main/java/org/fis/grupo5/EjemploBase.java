@@ -3,14 +3,14 @@ import java.util.Date;
 public class SistemaBiblioteca {
     public static void main(String[] args) {
         // Crear libro usando el patrón Builder
-        Libro libro1 = new Libro.Builder()
+        Libro libro1 = new Libro.Builder()  //Esto va encadenando las entradas  lo que hace que la implemnatacion en libro funcione
             .titulo("Diseño de Software")
             .autor("Erich Gamma")
             .genero("Tecnología")
             .anioPublicacion(1994)
             .numeroCopiasDisponibles(3)
             .build();
-
+   // Esto permirte llegarle la instancia y que separe la logica dentro de la clase con instancias separadas
         // Crear usuarios con diferentes políticas de retraso
         Usuario estudiante = new Usuario("Ana", new PoliticaEstudiante());
         Usuario profesor = new Usuario("Carlos", new PoliticaProfesor());

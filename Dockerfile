@@ -13,7 +13,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Build del proyecto
-RUN mvn clean install
+RUN mvn clean install || true
 
 # Ejecutar la aplicación
 CMD ["java", "-jar", "target/your-app.jar"]

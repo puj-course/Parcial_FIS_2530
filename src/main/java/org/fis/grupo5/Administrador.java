@@ -57,12 +57,4 @@ public class Administrador implements Suscribe {
         gestorUsuario.enviarNotificacion("email", "Actualización del sistema: " + mensaje);
     }
 
-    public static void main(String[] args) {
-        Administrador admin = new Administrador();
-        
-        // Ejemplo de uso del gestor de usuarios
-        admin.verificarRetrasoUsuario("profesor", new Date());
-        admin.notificarUsuario("email", "Recordatorio de devolución de libro");
-        admin.actualizar("Nuevo libro disponible en el sistema");
-    }
-}
+

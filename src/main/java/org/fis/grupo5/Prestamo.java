@@ -2,28 +2,34 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class Prestamo {
+    public static Prestamo instancia;
     private Usuario usuario;
     private Libro libro;
     private Date fechaPrestamo;
     private Date fechaDevolucionEstimada;
     private String estado;
 
-    // Constructor privado: solo accesible desde la fábrica
+    
     private Prestamo(Usuario usuario, Libro libro) {
         this.usuario = usuario;
         this.libro = libro;
         this.fechaPrestamo = new Date();
-
-        // Calculamos fecha estimada de devolución (por defecto 15 días)
         Calendar cal = Calendar.getInstance();
         cal.setTime(fechaPrestamo);
         cal.add(Calendar.DAY_OF_MONTH, 15);
         this.fechaDevolucionEstimada = cal.getTime();
 
         this.estado = "Activo";
+    } 
+public Prestamo GetInstance(const std::string& value)
+{
+    if(instancia==nullptr){
+        instancia = new Singleton(value);
     }
+    return instancia;
+}
+    //Aquí se crea el constructor privado  - Para limitar la instancia del préstamo a una sola, que será única
 
-    // ✅ MÉTODO FACTORY INTERNO
     public static Prestamo crearPrestamo(Usuario usuario, Libro libro) {
         return new Prestamo(usuario, libro);
     }
@@ -60,3 +66,4 @@ public class Prestamo {
         return estado;
     }
 }
+

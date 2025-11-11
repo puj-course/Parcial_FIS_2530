@@ -1,202 +1,138 @@
 package org.fis.grupo2.Patterns;
 
+import puj.ads.Libro;
+import com.example.usuaario.Usuario;
 import java.util.Date;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
-class BibliotecaFacade {
+public class BibliotecaFacade {
     private List<Libro> catalogoLibros;
-    private List<Usuario> usuarios;
-    private List<Prestamo> prestamos;
+    private List<Prestamo> prestamosActivos;
+    private List<Usuario> usuariosRegistrados;
 
     public BibliotecaFacade() {
         this.catalogoLibros = new ArrayList<>();
-        this.usuarios = new ArrayList<>();
-        this.prestamos = new ArrayList<>();
+        this.prestamosActivos = new ArrayList<>();
+        this.usuariosRegistrados = new ArrayList<>();
     }
 
-    // ===== OPERACIÓN COMPLEJA 1: REALIZAR PRÉSTAMO =====
-    public boolean realizarPrestamo(Usuario usuario, Libro libro) {
-        System.out.println("\n=== INICIANDO PROCESO DE PRÉSTAMO ===");
+    public void registrarNuevoLibro(String titulo, String autor, String genero, int anioPublicacion, int copias) {
+        Libro libro = new Libro();
+        libro.setTitulo(titulo);
+        libro.setAutor(autor);
+        libro.setGenero(genero);
+        libro.setAnioPublicacion(anioPublicacion);
+        libro.setNumeroCopiasDisponibles(copias);
 
-        // Paso 1: Verificar disponibilidad del libro
-        if (!verificarDisponibilidadLibro(libro)) {
-            System.out.println("❌ Préstamo rechazado: Libro no disponible");
+        catalogoLibros.add(libro);
+        libro.registrarLibro();
+    }
+
+    public void registrarNuevoUsuario(String nombre, String apellido, int cc, String correo, int telefono, String tipo) {
+        Usuario usuario = new Usuario(nombre, apellido, cc, correo, telefono, tipo);
+        usuariosRegistrados.add(usuario);
+        System.out.println("Usuario registrado: " + nombre + " " + apellido);
+    }
+
+    public boolean realizarPrestamo(int ccUsuario, String tituloLibro) {
+        Usuario usuario = buscarUsuarioPorCC(ccUsuario);
+        Libro libro = buscarLibroPorTitulo(tituloLibro);
+
+        if (usuario == null) {
+            System.out.println("Usuario no encontrado");
             return false;
         }
 
-        // Paso 2: Verificar límite de préstamos del usuario
-        if (!verificarLimitePrestamos(usuario)) {
-            System.out.println("❌ Préstamo rechazado: Usuario ha alcanzado el límite de préstamos");
+        if (libro == null) {
+            System.out.println("Libro no encontrado");
             return false;
         }
 
-        // Paso 3: Verificar que el usuario no tenga multas pendientes
-        if (tieneMultasPendientes(usuario)) {
-            System.out.println("❌ Préstamo rechazado: Usuario tiene multas pendientes");
+        if (libro.getNumeroCopiasDisponibles() <= 0) {
+            System.out.println("No hay copias disponibles");
             return false;
         }
 
-        // Paso 4: Crear el préstamo
         Date fechaPrestamo = new Date();
-        Date fechaDevolucion = calcularFechaDevolucion(fechaPrestamo, usuario.getDiasPrestamo());
-        Prestamo prestamo = new Prestamo(usuario, libro, fechaPrestamo, fechaDevolucion, "Activo");
+        Date fechaDevolucion = new Date(fechaPrestamo.getTime() + (15L * 24 * 60 * 60 * 1000));
 
-        // Paso 5: Actualizar inventario
+        Prestamo prestamo = new Prestamo(usuario, libro, fechaPrestamo, fechaDevolucion, "Activo");
+        prestamosActivos.add(prestamo);
+
         libro.actualizarCopiasDisponibles(-1);
 
-        // Paso 6: Registrar en el sistema
-        prestamos.add(prestamo);
-        usuario.agregarPrestamo(prestamo);
+        System.out.println("Préstamo realizado exitosamente");
+        System.out.println("Usuario: " + usuario.name + " " + usuario.apellido);
+        System.out.println("Libro: " + libro.getTitulo());
+        System.out.println("Fecha devolución: " + fechaDevolucion);
 
-        // Paso 7: Enviar notificaciones
-        enviarNotificacionPrestamo(usuario, libro, fechaDevolucion);
-
-        System.out.println("✅ Préstamo realizado exitosamente");
-        System.out.println("   Usuario: " + usuario.name + " " + usuario.apellido);
-        System.out.println("   Libro: " + libro.getTitulo());
-        System.out.println("   Fecha devolución: " + fechaDevolucion);
         return true;
     }
 
-    // ===== OPERACIÓN COMPLEJA 2: REALIZAR DEVOLUCIÓN =====
-    public boolean realizarDevolucion(Prestamo prestamo) {
-        System.out.println("\n=== INICIANDO PROCESO DE DEVOLUCIÓN ===");
+    public boolean procesarDevolucion(int ccUsuario, String tituloLibro) {
+        Prestamo prestamo = buscarPrestamoActivo(ccUsuario, tituloLibro);
 
-        // Paso 1: Verificar que el préstamo esté activo
-        if (!"Activo".equals(prestamo.getEstado())) {
-            System.out.println("❌ El préstamo ya fue devuelto");
+        if (prestamo == null) {
+            System.out.println("Préstamo no encontrado");
             return false;
         }
 
-        // Paso 2: Registrar la devolución
         prestamo.registrarDevolucion();
-
-        // Paso 3: Actualizar inventario
+        prestamosActivos.remove(prestamo);
         prestamo.getLibro().actualizarCopiasDisponibles(1);
 
-        // Paso 4: Verificar si hay retraso y calcular multa
-        if (hayRetraso(prestamo)) {
-            int diasRetraso = prestamo.calcularDiasRetraso();
-            double multa = calcularMultaPorRetraso(prestamo.getUsuario(), diasRetraso);
-            System.out.println("⚠️  Devolución con retraso: " + diasRetraso + " días");
-            System.out.println("   Multa aplicada: $" + multa);
-            enviarNotificacionMulta(prestamo.getUsuario(), multa);
-        }
-
-        // Paso 5: Actualizar estado del usuario
-        prestamo.getUsuario().removerPrestamo(prestamo);
-
-        // Paso 6: Registrar en el sistema
-        enviarNotificacionDevolucion(prestamo.getUsuario(), prestamo.getLibro());
-
-        System.out.println("✅ Devolución procesada exitosamente");
         return true;
     }
 
-    // ===== OPERACIÓN COMPLEJA 3: RENOVAR PRÉSTAMO =====
-    public boolean renovarPrestamo(Prestamo prestamo) {
-        System.out.println("\n=== INICIANDO RENOVACIÓN DE PRÉSTAMO ===");
-
-        // Verificar que el préstamo esté activo
-        if (!"Activo".equals(prestamo.getEstado())) {
-            System.out.println("❌ No se puede renovar: préstamo no activo");
-            return false;
+    public void verificarTodosLosRetrasos() {
+        System.out.println("Verificando retrasos en préstamos...");
+        for (Prestamo prestamo : prestamosActivos) {
+            if (prestamo.getEstado().equals("Activo")) {
+                prestamo.verificarRetraso();
+            }
         }
+    }
 
-        // Verificar que no haya retraso
-        if (hayRetraso(prestamo)) {
-            System.out.println("❌ No se puede renovar: préstamo con retraso");
-            return false;
+    public void mostrarEstadisticas() {
+        System.out.println("=== Estadísticas de la Biblioteca ===");
+        System.out.println("Total de libros en catálogo: " + catalogoLibros.size());
+        System.out.println("Total de usuarios registrados: " + usuariosRegistrados.size());
+        System.out.println("Préstamos activos: " + prestamosActivos.size());
+
+        int copiasDisponibles = 0;
+        for (Libro libro : catalogoLibros) {
+            copiasDisponibles += libro.getNumeroCopiasDisponibles();
         }
+        System.out.println("Copias disponibles totales: " + copiasDisponibles);
+    }
 
-        // Verificar disponibilidad del libro
-        if (prestamo.getLibro().getNumeroCopiasDisponibles() < 1) {
-            System.out.println("❌ No se puede renovar: no hay copias disponibles");
-            return false;
+    private Usuario buscarUsuarioPorCC(int cc) {
+        for (Usuario usuario : usuariosRegistrados) {
+            if (usuario.cc == cc) {
+                return usuario;
+            }
         }
-
-        // Extender fecha de devolución
-        Date nuevaFecha = calcularFechaDevolucion(
-                prestamo.getFechaDevolucionEstimada(),
-                prestamo.getUsuario().getDiasPrestamo()
-        );
-
-        System.out.println("✅ Préstamo renovado hasta: " + nuevaFecha);
-        return true;
+        return null;
     }
 
-    // ===== MÉTODOS PRIVADOS DE SOPORTE =====
-    private boolean verificarDisponibilidadLibro(Libro libro) {
-        return libro.getNumeroCopiasDisponibles() > 0;
-    }
-
-    private boolean verificarLimitePrestamos(Usuario usuario) {
-        return usuario.cantidadPrestamosActivos() < usuario.getMaxPrestamos();
-    }
-
-    private boolean tieneMultasPendientes(Usuario usuario) {
-        // Lógica para verificar multas pendientes
-        return false; // Placeholder
-    }
-
-    private Date calcularFechaDevolucion(Date fechaInicio, int dias) {
-        long milliseconds = fechaInicio.getTime() + (dias * 24L * 60 * 60 * 1000);
-        return new Date(milliseconds);
-    }
-
-    private boolean hayRetraso(Prestamo prestamo) {
-        Date fechaActual = new Date();
-        return fechaActual.after(prestamo.getFechaDevolucionEstimada());
-    }
-
-    private double calcularMultaPorRetraso(Usuario usuario, int diasRetraso) {
-        // Usar Strategy para calcular multa según tipo de usuario
-        CalculadoraMulta calculadora = new CalculadoraMulta();
-
-        switch (usuario.tipo.toLowerCase()) {
-            case "estudiante":
-                calculadora.setEstrategia(new MultaEstudiante());
-                break;
-            case "profesor":
-                calculadora.setEstrategia(new MultaProfesor());
-                break;
-            case "administrativo":
-                calculadora.setEstrategia(new MultaAdministrativo());
-                break;
-            case "invitado":
-                calculadora.setEstrategia(new MultaInvitado());
-                break;
+    private Libro buscarLibroPorTitulo(String titulo) {
+        for (Libro libro : catalogoLibros) {
+            if (libro.getTitulo().equalsIgnoreCase(titulo)) {
+                return libro;
+            }
         }
-
-        return calculadora.calcular(diasRetraso);
+        return null;
     }
 
-    private void enviarNotificacionPrestamo(Usuario usuario, Libro libro, Date fechaDevolucion) {
-        System.out.println("📧 Notificación enviada a: " + usuario.correo);
-        System.out.println("   Confirma préstamo del libro: " + libro.getTitulo());
-    }
-
-    private void enviarNotificacionDevolucion(Usuario usuario, Libro libro) {
-        System.out.println("📧 Notificación de devolución enviada a: " + usuario.correo);
-    }
-
-    private void enviarNotificacionMulta(Usuario usuario, double multa) {
-        System.out.println("📧 Notificación de multa enviada a: " + usuario.correo);
-        System.out.println("   Monto: $" + multa);
-    }
-
-    // Getters para acceso controlado
-    public List<Libro> getCatalogoLibros() {
-        return catalogoLibros;
-    }
-
-    public void agregarLibro(Libro libro) {
-        catalogoLibros.add(libro);
-    }
-
-    public void agregarUsuario(Usuario usuario) {
-        usuarios.add(usuario);
+    private Prestamo buscarPrestamoActivo(int ccUsuario, String tituloLibro) {
+        for (Prestamo prestamo : prestamosActivos) {
+            if (prestamo.getUsuario().cc == ccUsuario &&
+                    prestamo.getLibro().getTitulo().equalsIgnoreCase(tituloLibro) &&
+                    prestamo.getEstado().equals("Activo")) {
+                return prestamo;
+            }
+        }
+        return null;
     }
 }

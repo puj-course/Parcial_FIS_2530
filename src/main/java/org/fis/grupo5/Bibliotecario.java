@@ -1,9 +1,12 @@
 // ===================
 // CLASE BIBLIOTECARIO
 // ===================
-class Bibliotecario {
+class Bibliotecario extends  Publisher  {
     PrestamoFactory prestamoFactory;
     Notificador notificador;
+    // acaba iba un inicializador
+    Admin admin = new Admin();
+    this.suscribir(admin);
 
     public Bibliotecario(PrestamoFactory factory, Notificador notificador) {
         this.prestamoFactory = factory;
@@ -11,6 +14,8 @@ class Bibliotecario {
     }
 
     public Prestamo registrarPrestamo(Usuario usuario, Libro libro) {
+        notificarSubs("libro registrado"+ libro); // se notifico del libro al admin 
+        System.out.println("Suscrito admin: " + nombre + " - " + correo + " - " + telefono);
         if (libro.numeroCopiasDisponibles <= 0) {
             System.out.println("No hay copias disponibles");
             return null;

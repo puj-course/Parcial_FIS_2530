@@ -1,8 +1,34 @@
+version: '3.8'
+
 services:
-  java-app:
-    build: .
-    ports:
-      - "8080:8080"
+  biblioteca-fis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: biblioteca-fis-app
+    stdin_open: true  # Equivalente a -i (interactive)
+    tty: true         # Equivalente a -t (tty para entrada de consola)
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - TZ=America/Bogota
     volumes:
-      - .:/app
-    command: ["java", "-jar", "target/your-app.jar"]
+      # Persistir archivos temporales
+      - ./temp:/app/temp
+      # Persistir archivos de configuración (opcional)
+      - ./conf:/app/conf:ro
+    networks:
+      - biblioteca-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  biblioteca-network:
+    driver: bridge
+
+volumes:
+  temp-data:

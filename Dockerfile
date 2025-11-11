@@ -1,19 +1,38 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
+# Etapa 1: Construcción
+FROM maven:3.9-eclipse-temurin-17 AS build
 
-# Set the working directory in the container
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copiar archivos de configuración de Maven
+COPY pom.xml .
 
-# Install Maven
-RUN apt-get update && \
-    apt-get install -y maven && \
-    rm -rf /var/lib/apt/lists/*
+# Descargar dependencias (se cachean si pom.xml no cambia)
+RUN mvn dependency:go-offline -B
 
-# Build the project
-RUN mvn clean install
+# Copiar el código fuente
+COPY src ./src
 
-# Run the application
-CMD ["java", "-jar", "target/your-app.jar"]
+# Compilar y empaquetar la aplicación
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Imagen de ejecución
+FROM eclipse-temurin:17-jre-alpine
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar el JAR generado desde la etapa de construcción
+COPY --from=build /app/target/*.jar app.jar
+
+# Copiar archivos de configuración si son necesarios
+COPY conf ./conf
+
+# Crear directorio para datos temporales
+RUN mkdir -p /app/temp/temp_data
+
+# Variables de entorno opcionales
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
+
+# Comando para ejecutar la aplicación
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

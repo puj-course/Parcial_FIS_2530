@@ -1,19 +1,11 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
+# Etapa 1: compilar y correr tests
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /src
+COPY . .
+RUN mvn -B -DskipTests=false clean verify
 
-# Set the working directory in the container
+# Etapa 2: imagen ligera de demostración
+FROM eclipse-temurin:17-jre
 WORKDIR /app
-
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Install Maven
-RUN apt-get update && \
-    apt-get install -y maven && \
-    rm -rf /var/lib/apt/lists/*
-
-# Build the project
-RUN mvn clean install
-
-# Run the application
-CMD ["java", "-jar", "target/your-app.jar"]
+COPY --from=build /src/target /app/target
+CMD ["bash", "-c", "echo 'Imagen generada. Artefactos en /app/target' && ls -la /app/target"]

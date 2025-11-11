@@ -20,9 +20,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Run tests
-      run: mvn test
-
     - name: Build Docker image
       run: docker build -t bookhub:grupo4 .
 

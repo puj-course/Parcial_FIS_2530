@@ -1,0 +1,32 @@
+name: Pipeline_de_integracion
+
+on:
+  pull_request:
+    branches:
+      - Grupo-5-Parcial2
+  push:
+    branches:
+      - Grupo-5-Parcial2
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout del codigo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build- construir con maven
+        run: cd src && mvn clean package
+       
+      - name: Ejecutable 
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: src/target/*.jar
